@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+src/guidelab/__init__.py
+src/guidelab/guides.py
+src/guidelab.egg-info/PKG-INFO
+src/guidelab.egg-info/SOURCES.txt
+src/guidelab.egg-info/dependency_links.txt
+src/guidelab.egg-info/top_level.txt
+tests/test_guides.py
