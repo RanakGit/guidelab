@@ -6,7 +6,7 @@ def clean_sequence(seq):
     """Remove all whitespace, uppercase, and reject invalid letters."""
     cleaned = "".join(seq.split()).upper()
     bad = set(cleaned) - set(VALID_BASES)
-    if bad:                                  # when should this raise?
+    if bad:  # when should this raise?
         raise ValueError(f"Invalid letters: {sorted(bad)}")
     return cleaned
 
