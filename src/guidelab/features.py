@@ -19,6 +19,18 @@ def one_hot_encode(seq, length=GUIDE_LENGTH):
 
     x = np.zeros((4, len(seq)), dtype=np.float32)
     for col, base in enumerate(seq):
-        if base in _ROW:          # N is not in _ROW, so its column stays zero
+        if base in _ROW:  # N is not in _ROW, so its column stays zero
             x[_ROW[base], col] = 1
     return x
+
+
+def gc_content(seq):
+    """Fraction of G and C in the sequence (0.0 to 1.0).
+
+    N counts toward the length, so "GCNN" gives 0.5.
+    Raises ValueError for an empty sequence.
+    """
+    seq = clean_sequence(seq)
+    if not seq:
+        raise ValueError("Empty sequence")
+    return (seq.count("G") + seq.count("C")) / len(seq)
