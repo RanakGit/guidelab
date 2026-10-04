@@ -1,5 +1,5 @@
+
 from guidelab.sequences import clean_sequence, reverse_complement
-import pytest
 
 
 def _scan(seq):
