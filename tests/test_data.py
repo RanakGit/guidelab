@@ -1,6 +1,6 @@
 import pandas as pd
 
-from guidelab.data import load_screen
+from guidelab.data import gene_residuals, load_screen
 
 
 def _make_file(tmp_path, rows):
@@ -54,3 +54,26 @@ def test_drops_missing_score(tmp_path):
     path = _make_file(tmp_path, rows)
     df = load_screen(path, "toy")
     assert list(df["guide"]) == ["A" * 20]
+
+
+def test_gene_residuals_subtract_median():
+    df = pd.DataFrame(
+        {"gene": ["a"] * 4 + ["b"] * 3, "score": [-1, -2, -3, -4, -10, -20, -30]}
+    )
+    out = gene_residuals(df)
+    # gene a median is -2.5, gene b median is -20
+    assert list(out["resid"]) == [1.5, 0.5, -0.5, -1.5, 10.0, 0.0, -10.0]
+
+
+def test_gene_residuals_does_not_modify_input():
+    df = pd.DataFrame({"gene": ["a"] * 3, "score": [-1.0, -2.0, -3.0]})
+    gene_residuals(df)
+    assert "resid" not in df.columns
+
+
+def test_gene_residuals_drops_small_genes():
+    df = pd.DataFrame(
+        {"gene": ["a"] * 4 + ["b"] * 2, "score": [-1, -2, -3, -4, -5, -6]}
+    )
+    out = gene_residuals(df, min_guides=3)
+    assert set(out["gene"]) == {"a"}
