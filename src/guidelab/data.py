@@ -32,3 +32,29 @@ def gene_residuals(df, min_guides=3):
     out = df[sizes >= min_guides].copy()  # keep genes with enough guides
     out["resid"] = out["score"] - out.groupby("gene")["score"].transform("median")
     return out.reset_index(drop=True)
+
+
+def build_dataset(screens, min_guides=3):
+    """Combine screens into one row per unique guide.
+
+    screens: dict of name -> table from load_screen.
+    Each screen's within-gene residuals are divided by that screen's own
+    standard deviation, then averaged over the screens a guide appears in.
+    Returns columns: guide, context30, gene, label, n_screens.
+    """
+    parts = []
+    for df in screens.values():
+        r = gene_residuals(df, min_guides=min_guides)
+        r["z"] = r["resid"] / r["resid"].std()  # this screen's spread of resid
+        parts.append(r[["guide", "context30", "gene", "z"]])
+    everything = pd.concat(parts)
+    return (
+        everything.groupby("guide")
+        .agg(
+            context30=("context30", "first"),
+            gene=("gene", "first"),
+            label=("z", "mean"),  # average across screens
+            n_screens=("z", "size"),
+        )
+        .reset_index()
+    )
