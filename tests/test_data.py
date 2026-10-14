@@ -126,4 +126,4 @@ def test_build_label_ignores_screen_scale():
     bigger["score"] = bigger["score"] * 7
     out_a = build_dataset({"x": base})
     out_b = build_dataset({"x": bigger})
-    assert ____  # compare the two label columns; use pytest.approx for floats
+    assert out_a["label"].tolist() == pytest.approx(out_b["label"].tolist())
