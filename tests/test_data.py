@@ -1,6 +1,7 @@
 import pandas as pd
+import pytest
 
-from guidelab.data import gene_residuals, load_screen
+from guidelab.data import build_dataset, gene_residuals, load_screen
 
 
 def _make_file(tmp_path, rows):
@@ -77,3 +78,52 @@ def test_gene_residuals_drops_small_genes():
     )
     out = gene_residuals(df, min_guides=3)
     assert set(out["gene"]) == {"a"}
+
+
+def _screen(rows):
+    """rows: list of (guide, gene, score) -> a table like load_screen returns."""
+    df = pd.DataFrame(rows, columns=["guide", "gene", "score"])
+    df["context30"] = "ctx_" + df["guide"]
+    return df
+
+
+def test_build_one_row_per_guide_and_scales_agree():
+    s1 = _screen([("g1", "a", -1), ("g2", "a", -2), ("g3", "a", -3)])
+    s2 = _screen([("g1", "a", -10), ("g2", "a", -20), ("g3", "a", -30)])  # 10x scale
+    out = build_dataset({"x": s1, "y": s2})
+    assert len(out) == 3
+    assert list(out["n_screens"]) == [2, 2, 2]
+    assert list(out["label"]) == pytest.approx([1.0, 0.0, -1.0])
+
+
+def test_build_counts_screens_per_guide():
+    s1 = _screen([("g1", "a", -1), ("g2", "a", -2), ("g3", "a", -3)])
+    s2 = _screen([("g3", "a", -3), ("g4", "a", -4), ("g5", "a", -5)])
+    out = build_dataset({"x": s1, "y": s2}).set_index("guide")
+    assert len(out) == 5
+    assert out.loc["g3", "n_screens"] == 2
+    assert out.loc["g1", "n_screens"] == 1
+
+
+def test_build_labels_have_unit_spread():
+    s = _screen(
+        [
+            ("g1", "a", -1),
+            ("g2", "a", -2),
+            ("g3", "a", -3),
+            ("g4", "b", -10),
+            ("g5", "b", -20),
+            ("g6", "b", -30),
+        ]
+    )
+    out = build_dataset({"x": s})
+    assert out["label"].std() == pytest.approx(1.0)
+
+
+def test_build_label_ignores_screen_scale():
+    base = _screen([("g1", "a", -1), ("g2", "a", -2), ("g3", "a", -3)])
+    bigger = base.copy()
+    bigger["score"] = bigger["score"] * 7
+    out_a = build_dataset({"x": base})
+    out_b = build_dataset({"x": bigger})
+    assert ____  # compare the two label columns; use pytest.approx for floats
